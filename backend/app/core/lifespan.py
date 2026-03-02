@@ -1,18 +1,16 @@
 import logging
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 
-from app.services.model_store import model_store
+from .logging import configure_logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("nourishai")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Load all ML models on startup, release on shutdown."""
-    logger.info("🚀 Starting NourishAI backend – loading models...")
-    await model_store.load_all()
-    logger.info("✅ All models loaded. Server ready.")
+    configure_logging()
+    logger.info("Starting NourishAI API")
+    # TODO: init shared resources (FAISS load, embeddings warmup, DB pool)
     yield
-    logger.info("🛑 Shutting down NourishAI backend.")
+    logger.info("Shutting down NourishAI API")
