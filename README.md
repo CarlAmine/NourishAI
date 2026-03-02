@@ -45,10 +45,10 @@ NourishAI/
 pip install -r requirements.txt
 
 # Run the Streamlit app
-streamlit run app/app.py
+streamlit run streamlit_app/app.py
 
 # Run the FastAPI backend (optional)
-uvicorn backend.main:app --host 0.0.0.0 --port 8000
+uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
 ```
 
 ## 🔗 Model Downloads
