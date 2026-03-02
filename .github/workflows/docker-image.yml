@@ -2,7 +2,7 @@ name: Run NourishAI Docker image
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
@@ -14,4 +14,6 @@ jobs:
 
       - name: Run container (smoke test)
         run: |
-          docker run --rm --name nourishai-test carlamine/nourishai-app:latest
+          docker run -d --rm --name nourishai -p 8000:8000 -p 8501:8501 carlamine/nourishai-app:latest
+          docker ps
+          docker logs --tail 200 nourishai
