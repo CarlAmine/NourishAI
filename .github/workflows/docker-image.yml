@@ -1,8 +1,17 @@
+name: Run NourishAI Docker image
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
 jobs:
   run-my-container:
     runs-on: ubuntu-latest
     steps:
-      - name: Run NourishAI Docker image
+      - name: Pull image
+        run: docker pull carlamine/nourishai-app:latest
+
+      - name: Run container (smoke test)
         run: |
-          docker pull carlamine/nourishai-app:latest
-          docker run carlamine/nourishai-app:latest
+          docker run --rm --name nourishai-test carlamine/nourishai-app:latest
