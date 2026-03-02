@@ -1,4 +1,4 @@
-name: Run NourishAI Docker image
+name: Docker Smoke Test
 
 on:
   push:
@@ -6,14 +6,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-my-container:
+  smoke:
     runs-on: ubuntu-latest
     steps:
-      - name: Pull image
-        run: docker pull carlamine/nourishai-app:latest
+      - uses: actions/checkout@v4
 
-      - name: Run container (smoke test)
+      - name: Build image
+        run: docker build -t nourishai:ci .
+
+      - name: Run API container
         run: |
-          docker run -d --rm --name nourishai -p 8000:8000 -p 8501:8501 carlamine/nourishai-app:latest
-          docker ps
-          docker logs --tail 200 nourishai
+          docker run -d --rm --name api -p 8000:8000 nourishai:ci \
+            uvicorn backend.app.main:app --host 0.0.0.0 --port 8000
+          sleep 2
+          curl -f http://localhost:8000/api/v1/health
+
+      - name: Logs (if failed)
+        if: failure()
+        run: docker logs api || true
