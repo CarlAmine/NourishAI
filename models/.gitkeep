@@ -1,0 +1,7 @@
+# Place model files here:
+# - category_dict.npy  (included in repo)
+# - recipes_index.faiss  (download from Google Drive)
+# - recipes_data.pkl     (download from Google Drive)
+# - 490Image.pkl         (download from GitHub Releases)
+#
+# See README.md for download links.

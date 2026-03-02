@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NourishAI - Recipe Predictor</title>
+    <script>
+        function getRecipe(event) {
+            event.preventDefault();
+            let ingredients = document.getElementById("ingredients").value;
+
+            fetch("/predict", {
+                method: "POST",
+                body: new URLSearchParams({ingredients: ingredients}),
+                headers: { "Content-Type": "application/x-www-form-urlencoded" }
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("output").innerText = "Suggested Recipe: " + data.recipe;
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</head>
+<body>
+    <h2>Enter Ingredients (comma-separated)</h2>
+    <form onsubmit="getRecipe(event)">
+        <input type="text" id="ingredients" placeholder="e.g. chicken, garlic, tomatoes">
+        <button type="submit">Get Recipe</button>
+    </form>
+    <h3 id="output"></h3>
+</body>
+</html>

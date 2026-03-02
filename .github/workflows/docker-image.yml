@@ -1,0 +1,8 @@
+jobs:
+  run-my-container:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run NourishAI Docker image
+        run: |
+          docker pull carlamine/nourishai-app:latest
+          docker run carlamine/nourishai-app:latest
