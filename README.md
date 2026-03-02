@@ -1,62 +1,66 @@
-# 🥗 NourishAI
+# 🌿 NourishAI
 
-An AI-powered recipe recommendation system that identifies dishes from ingredients or food images.
+AI-powered recipe generation — identify dishes from ingredients or photos using ML models and a Streamlit interface.
 
 ## 📁 Project Structure
 
 ```
 NourishAI/
-├── app/                    # Application source code
-│   ├── app.py              # Streamlit frontend & main app logic
-│   └── api.py              # FastAPI backend (RAG-based recipe search)
-├── notebooks/              # Jupyter notebooks for EDA & model training
-│   ├── EDA.ipynb           # Exploratory Data Analysis
-│   ├── ImageModel.ipynb    # Image classification model
-│   ├── build_index.ipynb   # FAISS index builder
-│   └── demo_RAG.ipynb      # RAG demo notebook
-├── assets/                 # Static assets
-│   ├── Animation.json      # Lottie animation 1
-│   ├── Animation1.json     # Lottie animation 2
-│   └── recipe1.jpg         # Sample recipe image
-├── models/                 # ML model artifacts
-│   └── category_dict.npy   # Category dictionary for image classifier
-├── templates/              # HTML templates
-│   └── index.html          # Recipe predictor UI
-├── config/                 # Configuration files
-│   ├── .streamlit/
-│   │   └── config.toml
-│   └── .devcontainer/
-│       └── devcontainer.json
-├── docs/                   # Documentation & presentations
-│   └── NourishAI_Presentation.pptx
-├── .github/workflows/      # CI/CD workflows
-│   └── docker-image.yml
-├── Dockerfile
-├── requirements.txt
-└── README.md
+├── app/
+│   └── app.py                   # Main Streamlit frontend application
+├── backend/
+│   └── main.py                  # FastAPI backend for RAG-based recipe search
+├── notebooks/
+│   ├── 490EDA.ipynb             # Exploratory Data Analysis
+│   ├── 490Image.ipynb           # Image model training
+│   ├── build_index.ipynb        # FAISS index construction
+│   └── demo_RAG.ipynb           # RAG pipeline demo
+├── templates/
+│   └── index.html               # HTML frontend template
+├── assets/
+│   ├── Animation.json           # Lottie animation 1
+│   └── Animation1.json          # Lottie animation 2
+├── config/
+│   └── .streamlit/config.toml  # Streamlit configuration
+├── .devcontainer/
+│   └── devcontainer.json        # GitHub Codespaces config
+├── .github/
+│   └── workflows/
+│       └── docker-image.yml     # Docker CI/CD workflow
+├── DockerFile                   # Docker build instructions
+└── requirements.txt             # Python dependencies
 ```
 
-## 🚀 Getting Started
+## 🚀 Features
 
-### Run Locally
+- **Image-Based Recipe Detection**: Upload a food photo → get the dish name + full recipe
+- **Ingredient-Based Recipe Search**: Enter ingredients → retrieve matching recipes via FAISS
+- **RAG Pipeline**: Semantic search using `all-MiniLM-L6-v2` + FAISS index
+- **Lottie Animations**: Smooth animated feedback during processing
+
+## ⚙️ Setup & Running
+
 ```bash
+# Install dependencies
 pip install -r requirements.txt
+
+# Run the Streamlit app
 streamlit run app/app.py
+
+# Run the FastAPI backend (optional)
+uvicorn backend.main:app --host 0.0.0.0 --port 8000
 ```
 
-### Run with Docker
+## 🔗 Model Downloads
+
+| Asset | Link |
+|---|---|
+| FAISS Index + recipe.pkl | [Google Drive](https://drive.google.com/drive/folders/10okoRXmRZDGtsF8e5cDxSLEzJWfuF9nl?usp=sharing) |
+| Image Model (490Image.pkl) | [Google Drive](https://drive.google.com/file/d/1kyATzxBuLP5nWScPpwT9KrkkIuxY22vX/view?usp=sharing) |
+
+## 🐳 Docker
+
 ```bash
 docker pull carlamine/nourishai-app:latest
-docker run -p 8501:8501 carlamine/nourishai-app:latest
+docker run carlamine/nourishai-app:latest
 ```
-
-## 🧠 Models
-
-This project uses two main models:
-
-1. **Ingredient-based Recipe Recommender** — Uses FAISS + RAG to recommend recipes from a comma-separated ingredient list.
-2. **Image-based Recipe Identifier** — An SVC model trained to classify food images and match them to recipes.
-
-### Model Downloads (Google Drive)
-- [FAISS index + recipe.pkl](https://drive.google.com/drive/folders/10okoRXmRZDGtsF8e5cDxSLEzJWfuF9nl?usp=sharing)
-- [Image model (490Image.pkl)](https://github.com/CarlAmine/EECE-490/releases/download/v1.0/490Image.pkl)

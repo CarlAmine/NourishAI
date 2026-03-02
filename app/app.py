@@ -8,7 +8,7 @@ import streamlit as st
 from streamlit_lottie import st_lottie
 import pickle
 
-category_dict = np.load('models/category_dict.npy', allow_pickle=True).item()
+category_dict = np.load('category_dict.npy', allow_pickle=True).item()
 
 # -------------------------------
 # 1. PAGE CONFIGURATION
@@ -35,17 +35,14 @@ def load_recipe_csv():
 
     df = np.load('raw_recipes.npy', allow_pickle=True).item()
     return df
+
 recipe_dict = load_recipe_csv()
 
-import gdown
-import os
-import pickle
-import streamlit as st
 @st.cache_resource
 def load_image_model():
     url = "https://github.com/CarlAmine/EECE-490/releases/download/v1.0/490Image.pkl"
     destination = "490Image.pkl"
-    expected_size = 687 * 1024 * 1024  # 687 MB in bytes
+    expected_size = 687 * 1024 * 1024  # 687 MB
 
     def download_file_stream(url, destination):
         with requests.get(url, stream=True) as r:
@@ -55,7 +52,6 @@ def load_image_model():
                     if chunk:
                         f.write(chunk)
 
-    # Check if file is already good
     if not os.path.exists(destination) or os.path.getsize(destination) < expected_size:
         st.write("Downloading model file from GitHub...")
         try:
@@ -63,16 +59,13 @@ def load_image_model():
         except Exception as e:
             raise RuntimeError(f"Download failed: {e}")
 
-    # Final size check
     if os.path.getsize(destination) < expected_size:
         raise ValueError("Downloaded file is too small. Possibly corrupted.")
 
-    # Load model
     with open(destination, "rb") as f:
         model = pickle.load(f)
 
     return model
-
 
 svc_model = load_image_model()
 
@@ -190,10 +183,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # -------------------------------
-# 6. HELPER FUNCTIONS
+# 6. HELPERS
 # -------------------------------
 from PIL import Image
-import numpy as np
 import io
 import re
 
@@ -230,8 +222,8 @@ def format_nutrition(nutrition_data):
 def get_recipe_attributes(name):
     target = name.lower()
     matching_indices = [
-        index 
-        for index, recipe_name in recipe_dict['name'].items() 
+        index
+        for index, recipe_name in recipe_dict['name'].items()
         if target in recipe_name.lower()
     ]
     if not matching_indices:
@@ -249,7 +241,8 @@ def format_ingredients(raw_ingredients):
     return [ing.strip(" '\"") for ing in ingredients_str.split(',') if ing.strip()]
 
 def load_lottie_file(filename):
-    path = os.path.join(os.path.dirname(__file__), '..', 'assets', filename)
+    # Looks for animation files in the assets/ folder
+    path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', filename)
     if os.path.exists(path):
         try:
             with open(path, "r") as f:
@@ -261,9 +254,6 @@ def load_lottie_file(filename):
 lottie_data = load_lottie_file("Animation.json")
 lottie_data_2 = load_lottie_file("Animation1.json")
 
-# -------------------------------
-# 7. SHOW LOTTIE ANIMATION
-# -------------------------------
 def show_lottie_animation(animation_data, speed=1, height=300, width=300, key_suffix=""):
     if animation_data:
         st.markdown(
@@ -283,18 +273,20 @@ def show_lottie_animation(animation_data, speed=1, height=300, width=300, key_su
         st.markdown("</div>", unsafe_allow_html=True)
 
 # -------------------------------
-# 8. LAYOUT
+# 7. LAYOUT
 # -------------------------------
 col_input, col_anim, col_output = st.columns([1, 0.8, 1])
 
 with col_input:
     uploaded_file = st.file_uploader("OR Upload an Image of the Dish:", type=["jpg", "jpeg", "png"], key="image_upload")
+
     image_urls = [
         "https://images.unsplash.com/photo-1546069901-ba9599a7e63c",
         "https://images.unsplash.com/photo-1512621776951-a57141f2eefd",
         "https://images.unsplash.com/photo-1490645935967-10de6ba17061",
         "https://images.unsplash.com/photo-1504674900247-0877df9cc836"
     ]
+
     for i in range(0, 4, 2):
         row = st.columns(2)
         for j in range(2):
@@ -318,18 +310,22 @@ with col_output:
                 img_array = preprocess_for_svc(uploaded_file.read())
                 prediction = svc_model.predict(img_array)
                 predicted_class = category_dict[prediction[0]]
-                predicted_class = predicted_class.replace('_',' ')
+                predicted_class = predicted_class.replace('_', ' ')
+
                 st.markdown(f"""
                 <div class="recipe-card">
                     <h3>📷 Dish Identified from Image</h3>
                     <p class="big-text">🍽️ <strong>{predicted_class}</strong></p>
                 </div>
                 """, unsafe_allow_html=True)
+
                 recipe_data = get_recipe_attributes(predicted_class)
+
                 if 'error' not in recipe_data:
                     ingredients = format_ingredients(recipe_data['ingredients'])
                     steps = ''.join([step.strip("'") for step in recipe_data['steps']])
                     nutrition = format_nutrition(recipe_data['nutrition'])
+
                     st.markdown(f"""
                     <div class="recipe-card">
                         <h3>📝 Recipe Details</h3>
@@ -341,11 +337,12 @@ with col_output:
                     """, unsafe_allow_html=True)
                 else:
                     st.warning(f"No recipe found for {predicted_class}", icon="⚠️")
+
         except Exception as e:
             st.error(f"Error: {str(e)}", icon="🛑")
 
 # -------------------------------
-# 9. SUPPRESS TENSORFLOW WARNINGS
+# 8. SUPPRESS TENSORFLOW WARNINGS
 # -------------------------------
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 import logging
