@@ -1,0 +1,46 @@
+{
+  "version": "2026-03-15",
+  "cases": [
+    {
+      "id": "retr-001",
+      "query": "chicken garlic lemon",
+      "top_k": 5,
+      "expected_relevant_ids": ["rec-002"],
+      "filters": null,
+      "excluded_ids": []
+    },
+    {
+      "id": "retr-002",
+      "query": "pasta primavera",
+      "top_k": 5,
+      "expected_relevant_ids": ["rec-001"],
+      "filters": { "cuisine": ["italian"] },
+      "excluded_ids": ["rec-003", "rec-005"]
+    },
+    {
+      "id": "retr-003",
+      "query": "vegan dinner high fiber",
+      "top_k": 5,
+      "expected_relevant_ids": ["rec-003", "rec-005", "rec-009"],
+      "filters": { "dietary_tags": ["vegan"] },
+      "excluded_ids": ["rec-002", "rec-004", "rec-007"]
+    },
+    {
+      "id": "retr-004",
+      "query": "quick breakfast",
+      "top_k": 5,
+      "expected_relevant_ids": ["rec-004", "rec-007", "rec-010"],
+      "filters": { "meal_type": ["breakfast"], "max_total_time_minutes": 15 },
+      "excluded_ids": ["rec-002", "rec-003"]
+    },
+    {
+      "id": "retr-005",
+      "query": "keto lunch",
+      "top_k": 5,
+      "expected_relevant_ids": [],
+      "filters": { "dietary_tags": ["keto"] },
+      "excluded_ids": ["rec-001", "rec-002", "rec-003", "rec-004", "rec-005", "rec-006", "rec-007", "rec-008", "rec-009", "rec-010"],
+      "expect_empty": true
+    }
+  ]
+}

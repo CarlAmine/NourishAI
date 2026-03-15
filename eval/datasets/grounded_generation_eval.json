@@ -1,0 +1,69 @@
+{
+  "version": "2026-03-15",
+  "cases": [
+    {
+      "id": "gen-001",
+      "type": "recommendation",
+      "request": {
+        "ingredients": ["chicken", "garlic", "lemon"],
+        "dietary_notes": "low carb",
+        "top_k": 2,
+        "filters": { "dietary_tags": ["low_carb"] },
+        "include_diagnostics": true
+      },
+      "expect_fallback": false,
+      "expect_warning": false
+    },
+    {
+      "id": "gen-002",
+      "type": "recommendation",
+      "request": {
+        "ingredients": ["pasta", "garlic"],
+        "dietary_notes": "no dairy",
+        "top_k": 2,
+        "include_diagnostics": true
+      },
+      "expect_fallback": false,
+      "expect_warning": true
+    },
+    {
+      "id": "gen-003",
+      "type": "meal_plan",
+      "request": {
+        "dietary_profile": "high protein",
+        "calorie_target": 1800,
+        "days": 2,
+        "meals_per_day": 2,
+        "filters": { "dietary_tags": ["high_protein"] },
+        "include_diagnostics": true
+      },
+      "expect_fallback": false,
+      "expect_warning": false
+    },
+    {
+      "id": "gen-004",
+      "type": "nutrition_qa",
+      "request": {
+        "question": "Which recipes are high in protein?",
+        "top_k": 3,
+        "filters": { "dietary_tags": ["high_protein"] },
+        "include_diagnostics": true
+      },
+      "expect_fallback": false,
+      "expect_warning": false
+    },
+    {
+      "id": "gen-005",
+      "type": "meal_plan",
+      "request": {
+        "dietary_profile": "keto",
+        "days": 2,
+        "meals_per_day": 2,
+        "filters": { "dietary_tags": ["keto"] },
+        "include_diagnostics": true
+      },
+      "expect_fallback": true,
+      "expect_warning": true
+    }
+  ]
+}

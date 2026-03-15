@@ -3,6 +3,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from .logging import configure_logging
+from .observability import log_event
+from .validation import validate_startup
+from .config import settings
 
 logger = logging.getLogger("nourishai")
 
@@ -10,16 +13,25 @@ logger = logging.getLogger("nourishai")
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     configure_logging()
-    logger.info("Starting NourishAI API")
-    # initialize shared resources; failure to load RAG should not prevent boot
+    log_event(logger, "startup_begin")
     try:
-        from ..api.deps import get_rag_service
+        from ..api.deps import get_llm_service, get_rag_service
 
-        # instantiate service to trigger artifact loading only; do not call `search`
-        _ = get_rag_service()
-        logger.info("RAG service initialized (artifacts may or may not be present)")
+        rag = get_rag_service()
+        llm = get_llm_service()
+        log_event(logger, "startup_services_initialized")
+
+        report = validate_startup(rag, llm)
+        for warning in report["warnings"]:
+            log_event(logger, "startup_warning", detail=warning)
+        for error in report["errors"]:
+            log_event(logger, "startup_error", detail=error)
+        if settings.STRICT_STARTUP and report["errors"]:
+            raise RuntimeError("Startup validation failed: " + "; ".join(report["errors"]))
     except Exception as exc:  # pragma: no cover - artifacts may be absent
-        logger.exception("RAG init failed, continuing without it: %s", exc)
+        log_event(logger, "startup_exception", error=str(exc))
+        if settings.STRICT_STARTUP:
+            raise
 
     yield
-    logger.info("Shutting down NourishAI API")
+    log_event(logger, "shutdown")

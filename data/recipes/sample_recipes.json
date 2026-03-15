@@ -1,0 +1,93 @@
+[
+  {
+    "id": "rec_001",
+    "title": "Lemon Herb Chicken Bowl",
+    "meal_type": ["dinner"],
+    "dietary_tags": ["high_protein", "gluten_free"],
+    "cuisine": ["mediterranean"],
+    "ingredients": [
+      "chicken breast",
+      "lemon",
+      "olive oil",
+      "garlic",
+      "oregano",
+      "quinoa",
+      "spinach",
+      "cherry tomatoes"
+    ],
+    "instructions": [
+      "Marinate chicken with lemon, olive oil, garlic, and oregano for 20 minutes.",
+      "Cook quinoa until fluffy; set aside.",
+      "Sear chicken until cooked through, then slice.",
+      "Assemble bowl with quinoa, spinach, tomatoes, and sliced chicken.",
+      "Drizzle with remaining marinade as dressing."
+    ],
+    "nutrition": {
+      "calories": 520,
+      "protein_g": 45,
+      "carbs_g": 42,
+      "fat_g": 18
+    },
+    "source": "sample"
+  },
+  {
+    "id": "rec_002",
+    "title": "Chickpea Spinach Curry",
+    "meal_type": ["dinner"],
+    "dietary_tags": ["vegan", "high_fiber"],
+    "cuisine": ["indian"],
+    "ingredients": [
+      "chickpeas",
+      "spinach",
+      "onion",
+      "garlic",
+      "ginger",
+      "tomato puree",
+      "cumin",
+      "coriander",
+      "turmeric"
+    ],
+    "instructions": [
+      "Saute onion, garlic, and ginger until fragrant.",
+      "Add spices and toast for 30 seconds.",
+      "Stir in tomato puree and simmer for 5 minutes.",
+      "Add chickpeas and cook for 10 minutes.",
+      "Fold in spinach until wilted and season to taste."
+    ],
+    "nutrition": {
+      "calories": 410,
+      "protein_g": 18,
+      "carbs_g": 52,
+      "fat_g": 10
+    },
+    "source": "sample"
+  },
+  {
+    "id": "rec_003",
+    "title": "Overnight Oats with Berries",
+    "meal_type": ["breakfast"],
+    "dietary_tags": ["vegetarian", "high_fiber"],
+    "cuisine": ["american"],
+    "ingredients": [
+      "rolled oats",
+      "milk",
+      "greek yogurt",
+      "chia seeds",
+      "blueberries",
+      "strawberries",
+      "honey"
+    ],
+    "instructions": [
+      "Combine oats, milk, yogurt, and chia seeds in a jar.",
+      "Refrigerate overnight.",
+      "Top with berries and honey before serving."
+    ],
+    "nutrition": {
+      "calories": 360,
+      "protein_g": 17,
+      "carbs_g": 48,
+      "fat_g": 9
+    },
+    "source": "sample"
+  }
+]

@@ -1,0 +1,47 @@
+[
+  {
+    "id": "ing_001",
+    "name": "quinoa",
+    "aliases": ["quinua"],
+    "notes": "Gluten-free grain-like seed with a mild nutty flavor.",
+    "substitutions": ["brown rice", "farro"],
+    "allergens": [],
+    "nutrition": {
+      "calories": 222,
+      "protein_g": 8,
+      "carbs_g": 39,
+      "fat_g": 4
+    },
+    "source": "sample"
+  },
+  {
+    "id": "ing_002",
+    "name": "chickpeas",
+    "aliases": ["garbanzo beans"],
+    "notes": "Legume used in curries, salads, and hummus.",
+    "substitutions": ["white beans", "lentils"],
+    "allergens": [],
+    "nutrition": {
+      "calories": 269,
+      "protein_g": 15,
+      "carbs_g": 45,
+      "fat_g": 4
+    },
+    "source": "sample"
+  },
+  {
+    "id": "ing_003",
+    "name": "chicken breast",
+    "aliases": ["boneless chicken"],
+    "notes": "Lean protein commonly used in bowls and salads.",
+    "substitutions": ["turkey breast", "tofu"],
+    "allergens": [],
+    "nutrition": {
+      "calories": 165,
+      "protein_g": 31,
+      "carbs_g": 0,
+      "fat_g": 3
+    },
+    "source": "sample"
+  }
+]

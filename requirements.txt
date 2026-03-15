@@ -79,5 +79,7 @@ pydantic-settings
 gdown
 faiss-cpu
 sentence-transformers
+qdrant-client
+rank-bm25
 torch
 streamlit-lottie

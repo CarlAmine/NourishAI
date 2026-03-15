@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.env
+artifacts/
+backend/artifacts/
+.pytest_cache/
+pytest-cache-files-*/
+*.log
+uvicorn.out
+uvicorn.err
+.uvicorn.pid
+.uvicorn.job
+models/
+!models/.gitkeep
+eval/outputs/
+!eval/outputs/.gitkeep

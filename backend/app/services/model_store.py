@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 import numpy as np
 import requests
 
-from app.core.config import settings
+from ..core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class ModelStore:
         self.category_dict: Dict[int, str] = {}
         self.recipe_dict: Dict[str, Any] = {}
         self.faiss_index: Any = None
-        self.rag_texts: List[str] = []
+        self.rag_texts: List[dict] = []
         self.sentence_model: Any = None
 
     async def load_all(self):
@@ -30,17 +30,17 @@ class ModelStore:
         self._try_load_rag()
 
     def _load_category_dict(self):
-        path = settings.category_dict_path
+        path = settings.CATEGORY_DICT_PATH
         if not os.path.exists(path):
-            logger.warning("category_dict.npy not found at %s – image prediction disabled.", path)
+            logger.warning("category_dict.npy not found at %s - image prediction disabled.", path)
             return
         self.category_dict = np.load(path, allow_pickle=True).item()
         logger.info("Loaded category_dict with %d classes.", len(self.category_dict))
 
     def _load_recipe_dict(self):
-        path = settings.raw_recipes_path
+        path = settings.RAW_RECIPES_PATH
         if not os.path.exists(path):
-            logger.warning("raw_recipes.npy not found – downloading from Google Drive...")
+            logger.warning("raw_recipes.npy not found - downloading from Google Drive...")
             self._download_gdrive(settings.GDRIVE_RAW_RECIPES_ID, path)
         if os.path.exists(path):
             self.recipe_dict = np.load(path, allow_pickle=True).item()
@@ -49,7 +49,7 @@ class ModelStore:
             logger.error("Could not load recipe_dict.")
 
     def _load_image_model(self):
-        path = settings.image_model_path
+        path = settings.IMAGE_MODEL_PATH
         expected = settings.IMAGE_MODEL_EXPECTED_SIZE_MB * 1024 * 1024
         if not os.path.exists(path) or os.path.getsize(path) < expected:
             logger.info("Downloading image model from GitHub Releases...")
@@ -62,19 +62,20 @@ class ModelStore:
             logger.error("Image model not available.")
 
     def _try_load_rag(self):
-        faiss_path = settings.faiss_index_path
-        data_path = settings.recipes_data_path
+        faiss_path = settings.FAISS_INDEX_PATH
+        data_path = settings.RECIPES_PKL_PATH
         if not (os.path.exists(faiss_path) and os.path.exists(data_path)):
-            logger.info("FAISS index not found – RAG endpoint will be unavailable.")
+            logger.info("FAISS index not found - RAG endpoint will be unavailable.")
             return
         try:
             import faiss
             from sentence_transformers import SentenceTransformer
+
             self.faiss_index = faiss.read_index(faiss_path)
             with open(data_path, "rb") as f:
                 self.rag_texts = pickle.load(f)
             self.sentence_model = SentenceTransformer("all-MiniLM-L6-v2")
-            logger.info("RAG components loaded (%d texts).", len(self.rag_texts))
+            logger.info("RAG components loaded (%d recipes).", len(self.rag_texts))
         except Exception as exc:
             logger.warning("Could not load RAG components: %s", exc)
 
@@ -83,6 +84,7 @@ class ModelStore:
         url = f"https://drive.google.com/uc?id={file_id}"
         try:
             import gdown
+
             gdown.download(url, destination, quiet=False)
         except Exception as exc:
             logger.error("gdown failed: %s", exc)
@@ -96,7 +98,7 @@ class ModelStore:
                     for chunk in r.iter_content(chunk_size=8192):
                         if chunk:
                             f.write(chunk)
-            logger.info("Downloaded %s → %s", url, destination)
+            logger.info("Downloaded %s -> %s", url, destination)
         except Exception as exc:
             logger.error("Stream download failed: %s", exc)
 

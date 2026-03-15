@@ -1,0 +1,23 @@
+[
+  {
+    "id": "nutri_001",
+    "title": "Protein Intake Overview",
+    "text": "Protein supports muscle maintenance and satiety. Distribute protein across meals and include a variety of sources such as lean poultry, legumes, dairy, and tofu.",
+    "nutrients": ["protein"],
+    "source": "sample"
+  },
+  {
+    "id": "nutri_002",
+    "title": "Fiber and Blood Sugar",
+    "text": "Dietary fiber slows digestion and can help moderate post-meal blood sugar spikes. Pair fiber-rich foods like legumes, whole grains, and vegetables with balanced protein and fat.",
+    "nutrients": ["fiber", "carbohydrates"],
+    "source": "sample"
+  },
+  {
+    "id": "nutri_003",
+    "title": "Sodium Awareness",
+    "text": "Reducing sodium intake can support heart health. Favor herbs, citrus, and spice blends over salt-heavy seasonings when possible.",
+    "nutrients": ["sodium"],
+    "source": "sample"
+  }
+]
