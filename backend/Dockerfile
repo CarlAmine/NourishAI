@@ -1,4 +1,5 @@
 # ── Stage 1: Install Python deps ────────────────────────────────────────────
+# Build context is the REPO ROOT (set dockerContext: . in render.yaml)
 FROM python:3.11-slim AS builder
 WORKDIR /app
 
@@ -6,23 +7,20 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential curl && \
     rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
-# pandas needed for the converter script
-RUN pip install --no-cache-dir pandas
+COPY backend/requirements.txt .
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir pandas
 
-# ── Stage 2: Download Food.com dataset + build FAISS index ────────────────────
-# Runs at BUILD time — artifacts are baked into the image.
-# Requires KAGGLE_USERNAME + KAGGLE_KEY build args (set in Render Build Args).
+# ── Stage 2: Download Food.com + build FAISS index ───────────────────────────
 FROM builder AS index-builder
 WORKDIR /app
 
-# Kaggle credentials passed as build args
 ARG KAGGLE_USERNAME
 ARG KAGGLE_KEY
-# Number of recipes to index (50k is a good balance of coverage vs build time)
 ARG RECIPE_LIMIT=50000
 
+# Copy scripts and sample data from repo root
 COPY scripts/ ./scripts/
 COPY data/sample_recipes.json ./data/sample_recipes.json
 
@@ -38,7 +36,7 @@ RUN mkdir -p /app/models /app/data && \
             --file RAW_recipes.csv \
             --path /tmp/foodcom \
             --unzip && \
-        echo "==> Converting to NourishAI format (limit=${RECIPE_LIMIT})" && \
+        echo "==> Converting ${RECIPE_LIMIT} recipes to NourishAI format" && \
         python scripts/convert_foodcom.py \
             --input /tmp/foodcom/RAW_recipes.csv \
             --output /app/data/recipes.json \
@@ -50,14 +48,14 @@ RUN mkdir -p /app/models /app/data && \
         rm -rf /tmp/foodcom /root/.config/kaggle && \
         echo "==> Full dataset index built:" && ls -lh /app/models/ ; \
     else \
-        echo "==> KAGGLE_USERNAME/KAGGLE_KEY not set, falling back to sample recipes" && \
+        echo "==> No Kaggle credentials — using 10-recipe sample" && \
         python scripts/build_rag_index.py \
             --recipes /app/data/sample_recipes.json \
             --out-dir /app/models && \
-        echo "==> Sample index built (10 recipes):" && ls -lh /app/models/ ; \
+        echo "==> Sample index built:" && ls -lh /app/models/ ; \
     fi
 
-# ── Stage 3: Runtime ────────────────────────────────────────────────────────
+# ── Stage 3: Runtime ─────────────────────────────────────────────────────────
 FROM python:3.11-slim AS runtime
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 WORKDIR /app
@@ -65,11 +63,11 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy pre-built index
+# Baked-in index artifacts
 COPY --from=index-builder /app/models /app/models
 
-# Copy application source
-COPY . .
+# Copy backend application source only
+COPY backend/ .
 
 RUN mkdir -p /app/models /app/artifacts
 

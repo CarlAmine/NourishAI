@@ -3,13 +3,13 @@
 
 services:
 
-  # ── Backend (FastAPI) ───────────────────────────────────────────────────────
+  # ── Backend (FastAPI) ──────────────────────────────────────────────────────
   - type: web
     name: nourishai-backend
     runtime: docker
     dockerfilePath: backend/Dockerfile
-    dockerContext: backend
-    plan: standard          # needs RAM for FAISS + sentence-transformers (~1 GB)
+    dockerContext: .                  # repo root — so Dockerfile can reach scripts/ and data/
+    plan: standard
     healthCheckPath: /api/v1/health
     envVars:
       - key: APP_NAME
@@ -23,19 +23,15 @@ services:
       - key: STRICT_STARTUP
         value: "false"
       - key: CORS_ORIGINS
-        value: "*"          # tighten to your frontend URL after first deploy
+        value: "*"
       - key: OPENAI_API_KEY
-        sync: false         # secret — set manually in Render dashboard
+        sync: false
       - key: OPENAI_MODEL
         value: gpt-4o-mini
       - key: OPENAI_TEMPERATURE
         value: "0.2"
       - key: OPENAI_MAX_TOKENS
         value: "800"
-      - key: GDRIVE_RAW_RECIPES_ID
-        value: 1lE6zl-9dJKUnNu6CDuBvHPpGodKrGnoX
-      - key: GDRIVE_FOLDER_ID
-        value: 10okoRXmRZDGtsF8e5cDxSLEzJWfuF9nl
       - key: FAISS_INDEX_PATH
         value: models/faiss.index
       - key: RECIPES_PKL_PATH
@@ -49,7 +45,7 @@ services:
       - key: HYBRID_ALPHA
         value: "0.65"
 
-  # ── Frontend (React + Nginx) ────────────────────────────────────────────────
+  # ── Frontend (React + Nginx) ───────────────────────────────────────────────
   - type: web
     name: nourishai-frontend
     runtime: docker
@@ -58,4 +54,4 @@ services:
     plan: starter
     envVars:
       - key: VITE_API_URL
-        value: https://nourishai-backend.onrender.com/api/v1   # update after backend deploys
+        value: https://nourishai-backend.onrender.com/api/v1
