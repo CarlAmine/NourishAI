@@ -1,103 +1,125 @@
-import { X, Clock, ChefHat, Star } from 'lucide-react';
-import type { RecipeResult } from '../types/api';
+import { Recipe } from '@/types/api'
+import { X, Clock, Flame, Droplet } from 'lucide-react'
+import { useEffect } from 'react'
 
-export default function RecipeDetailModal({
-  recipe,
-  onClose,
-}: {
-  recipe: RecipeResult;
-  onClose: () => void;
-}) {
-  const totalTime = (recipe.prep_time ?? 0) + (recipe.cook_time ?? 0);
+interface RecipeDetailModalProps {
+  recipe: Recipe | null
+  onClose: () => void
+}
+
+export function RecipeDetailModal({ recipe, onClose }: RecipeDetailModalProps) {
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handleEscape)
+    return () => window.removeEventListener('keydown', handleEscape)
+  }, [onClose])
+
+  if (!recipe) return null
+
+  const nutrition = recipe.nutrition || {}
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="sticky top-0 bg-white/95 backdrop-blur px-6 pt-6 pb-4 flex items-start justify-between border-b border-stone-100">
-          <div>
-            <h2 className="text-xl font-bold text-stone-800">{recipe.name}</h2>
-            <div className="flex items-center gap-3 mt-1 text-sm text-stone-500">
-              {totalTime > 0 && (
-                <span className="flex items-center gap-1"><Clock size={13} />{totalTime} min</span>
-              )}
-              {recipe.servings && (
-                <span className="flex items-center gap-1"><ChefHat size={13} />{recipe.servings} servings</span>
-              )}
-              {recipe.rating && (
-                <span className="flex items-center gap-1 text-amber-500">
-                  <Star size={13} fill="currentColor" />{recipe.rating.toFixed(1)}
-                </span>
-              )}
-            </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+        <div className="sticky top-0 bg-gradient-to-r from-forest-50 to-cream-50 border-b border-cream-200 p-6 flex items-start justify-between">
+          <div className="flex-1">
+            <h2 className="font-display text-2xl font-bold text-charcoal-800 mb-2">{recipe.name}</h2>
+            {recipe.minutes && (
+              <div className="flex items-center gap-2 text-charcoal-700">
+                <Clock className="w-4 h-4" />
+                <span className="text-sm">{recipe.minutes} minutes</span>
+              </div>
+            )}
           </div>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-700 transition-colors">
-            <X size={22} />
+          <button onClick={onClose} className="p-2 hover:bg-cream-200 rounded-lg transition-colors">
+            <X className="w-6 h-6 text-charcoal-700" />
           </button>
         </div>
 
         <div className="p-6 space-y-6">
-          {recipe.description && (
-            <p className="text-stone-600">{recipe.description}</p>
-          )}
-
-          {recipe.nutrition && (
-            <div className="grid grid-cols-4 gap-3 bg-forest-50 rounded-2xl p-4">
-              {[
-                { label: 'Calories', value: recipe.nutrition.calories },
-                { label: 'Protein', value: recipe.nutrition.protein ? `${recipe.nutrition.protein}g` : undefined },
-                { label: 'Carbs', value: recipe.nutrition.carbs ? `${recipe.nutrition.carbs}g` : undefined },
-                { label: 'Fat', value: recipe.nutrition.fat ? `${recipe.nutrition.fat}g` : undefined },
-              ].map(({ label, value }) =>
-                value !== undefined ? (
-                  <div key={label} className="text-center">
-                    <div className="text-lg font-bold text-forest-700">{value}</div>
-                    <div className="text-xs text-stone-500">{label}</div>
-                  </div>
-                ) : null
-              )}
-            </div>
-          )}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {nutrition.calories && (
+              <div className="bg-terracotta-50 rounded-xl p-4 border border-terracotta-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Flame className="w-4 h-4 text-terracotta-500" />
+                  <span className="text-xs font-mono font-medium text-terracotta-700 uppercase">Calories</span>
+                </div>
+                <div className="text-2xl font-bold text-terracotta-700">{Math.round(nutrition.calories)}</div>
+                <div className="text-xs text-terracotta-600">kcal</div>
+              </div>
+            )}
+            {nutrition.protein && (
+              <div className="bg-forest-50 rounded-xl p-4 border border-forest-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Droplet className="w-4 h-4 text-forest-500" />
+                  <span className="text-xs font-mono font-medium text-forest-700 uppercase">Protein</span>
+                </div>
+                <div className="text-2xl font-bold text-forest-700">{Math.round(nutrition.protein)}</div>
+                <div className="text-xs text-forest-600">grams</div>
+              </div>
+            )}
+            {nutrition.carbs && (
+              <div className="bg-terracotta-50 rounded-xl p-4 border border-terracotta-200">
+                <div className="flex items-center gap-2 mb-2">
+                  <Droplet className="w-4 h-4 text-terracotta-400" />
+                  <span className="text-xs font-mono font-medium text-terracotta-700 uppercase">Carbs</span>
+                </div>
+                <div className="text-2xl font-bold text-terracotta-700">{Math.round(nutrition.carbs)}</div>
+                <div className="text-xs text-terracotta-600">grams</div>
+              </div>
+            )}
+            {nutrition.total_fat && (
+              <div className="bg-cream-100 rounded-xl p-4 border border-cream-300">
+                <div className="flex items-center gap-2 mb-2">
+                  <Droplet className="w-4 h-4 text-charcoal-600" />
+                  <span className="text-xs font-mono font-medium text-charcoal-700 uppercase">Fat</span>
+                </div>
+                <div className="text-2xl font-bold text-charcoal-700">{Math.round(nutrition.total_fat)}</div>
+                <div className="text-xs text-charcoal-600">grams</div>
+              </div>
+            )}
+          </div>
 
           {recipe.ingredients && recipe.ingredients.length > 0 && (
             <div>
-              <h3 className="font-semibold text-stone-700 mb-2">Ingredients</h3>
-              <ul className="space-y-1">
-                {recipe.ingredients.map((ing, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-stone-600">
-                    <span className="text-forest-500 mt-0.5">•</span>{ing}
+              <h3 className="text-sm font-mono font-bold uppercase text-charcoal-700/50 mb-3">Ingredients</h3>
+              <ul className="space-y-2">
+                {recipe.ingredients.map((ingredient, idx) => (
+                  <li key={idx} className="flex items-start gap-3 text-charcoal-700">
+                    <span className="text-forest-500 font-bold mt-0.5">•</span>
+                    <span>{ingredient}</span>
                   </li>
                 ))}
               </ul>
             </div>
           )}
 
-          {recipe.instructions && recipe.instructions.length > 0 && (
+          {recipe.steps && recipe.steps.length > 0 && (
             <div>
-              <h3 className="font-semibold text-stone-700 mb-2">Instructions</h3>
-              <ol className="space-y-2">
-                {recipe.instructions.map((step, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-stone-600">
-                    <span className="shrink-0 w-6 h-6 bg-forest-100 text-forest-700 rounded-full flex items-center justify-center text-xs font-bold">
-                      {i + 1}
+              <h3 className="text-sm font-mono font-bold uppercase text-charcoal-700/50 mb-3">Instructions</h3>
+              <ol className="space-y-3">
+                {recipe.steps.map((step, idx) => (
+                  <li key={idx} className="flex gap-3 text-charcoal-700">
+                    <span className="flex-shrink-0 w-6 h-6 rounded-full bg-forest-100 text-forest-700 flex items-center justify-center text-xs font-bold">
+                      {idx + 1}
                     </span>
-                    {step}
+                    <span className="pt-0.5">{step}</span>
                   </li>
                 ))}
               </ol>
             </div>
           )}
+        </div>
 
-          {recipe.dietary_tags && recipe.dietary_tags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {recipe.dietary_tags.map((tag) => (
-                <span key={tag} className="text-xs bg-forest-50 text-forest-700 px-3 py-1 rounded-full border border-forest-100">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
+        <div className="sticky bottom-0 bg-cream-50 border-t border-cream-200 p-6 flex gap-3">
+          <button onClick={onClose} className="flex-1 px-6 py-3 bg-cream-200 text-charcoal-800 font-medium rounded-xl hover:bg-cream-300 transition-colors">
+            Close
+          </button>
+          <button className="flex-1 btn-primary">Add to Meal Plan</button>
         </div>
       </div>
     </div>
-  );
+  )
 }

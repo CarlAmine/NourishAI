@@ -1,82 +1,102 @@
-import { useState } from 'react';
-import { Clock, Star, ChefHat } from 'lucide-react';
-import type { RecipeResult } from '../types/api';
-import RecipeDetailModal from './RecipeDetailModal';
+import { Recipe } from '@/types/api'
+import { Clock, Flame, Droplet } from 'lucide-react'
+import { useState } from 'react'
 
-export default function RecipeCard({ recipe }: { recipe: RecipeResult }) {
-  const [open, setOpen] = useState(false);
-  const totalTime = (recipe.prep_time ?? 0) + (recipe.cook_time ?? 0);
+interface RecipeCardProps {
+  recipe: Recipe
+  onViewDetails?: (recipe: Recipe) => void
+}
+
+export function RecipeCard({ recipe, onViewDetails }: RecipeCardProps) {
+  const [isHovered, setIsHovered] = useState(false)
+
+  const nutrition = recipe.nutrition || {}
+  const matchScore = recipe.match_score ? Math.round(recipe.match_score * 100) : null
 
   return (
-    <>
-      <div
-        onClick={() => setOpen(true)}
-        className="bg-white rounded-2xl p-5 shadow-sm border border-stone-100 hover:shadow-md hover:border-forest-200 transition-all cursor-pointer group"
-      >
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-stone-800 group-hover:text-forest-700 transition-colors line-clamp-2">
+    <div
+      className="card p-6 hover:shadow-md transition-all duration-300 cursor-pointer group"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={() => onViewDetails?.(recipe)}
+    >
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex-1">
+          <h3 className="font-display text-lg font-bold text-charcoal-800 group-hover:text-forest-600 transition-colors line-clamp-2">
             {recipe.name}
           </h3>
-          {recipe.rating && (
-            <div className="flex items-center gap-1 text-amber-500 text-sm ml-2 shrink-0">
-              <Star size={13} fill="currentColor" />
-              {recipe.rating.toFixed(1)}
+          {recipe.minutes && (
+            <div className="flex items-center gap-1 text-sm text-charcoal-700/60 mt-1">
+              <Clock className="w-3.5 h-3.5" />
+              <span>{recipe.minutes} min</span>
             </div>
           )}
         </div>
-
-        {recipe.description && (
-          <p className="text-sm text-stone-500 line-clamp-2 mb-3">{recipe.description}</p>
-        )}
-
-        <div className="flex items-center gap-3 text-xs text-stone-400 mb-3">
-          {totalTime > 0 && (
-            <span className="flex items-center gap-1">
-              <Clock size={12} /> {totalTime} min
-            </span>
-          )}
-          {recipe.servings && (
-            <span className="flex items-center gap-1">
-              <ChefHat size={12} /> {recipe.servings} servings
-            </span>
-          )}
-          {recipe.score !== undefined && (
-            <span className="ml-auto text-forest-600 font-medium">
-              {(recipe.score * 100).toFixed(0)}% match
-            </span>
-          )}
-        </div>
-
-        {recipe.nutrition && (
-          <div className="grid grid-cols-4 gap-1 text-center bg-stone-50 rounded-xl p-2">
-            {[
-              { label: 'Cal', value: recipe.nutrition.calories },
-              { label: 'Protein', value: recipe.nutrition.protein ? `${recipe.nutrition.protein}g` : undefined },
-              { label: 'Carbs', value: recipe.nutrition.carbs ? `${recipe.nutrition.carbs}g` : undefined },
-              { label: 'Fat', value: recipe.nutrition.fat ? `${recipe.nutrition.fat}g` : undefined },
-            ].map(({ label, value }) =>
-              value !== undefined ? (
-                <div key={label}>
-                  <div className="text-xs font-semibold text-stone-700">{value}</div>
-                  <div className="text-[10px] text-stone-400">{label}</div>
-                </div>
-              ) : null
-            )}
-          </div>
-        )}
-
-        {recipe.dietary_tags && recipe.dietary_tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-3">
-            {recipe.dietary_tags.slice(0, 3).map((tag) => (
-              <span key={tag} className="text-[10px] bg-forest-50 text-forest-700 px-2 py-0.5 rounded-full">
-                {tag}
-              </span>
-            ))}
+        {matchScore && (
+          <div className="ml-4 flex-shrink-0">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-forest-50 border-2 border-forest-200">
+              <span className="font-mono font-bold text-forest-700 text-sm">{matchScore}%</span>
+            </div>
           </div>
         )}
       </div>
 
-      {open && <RecipeDetailModal recipe={recipe} onClose={() => setOpen(false)} />}
-    </>
-  );
+      {recipe.tags && recipe.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {recipe.tags.slice(0, 3).map((tag, idx) => (
+            <span key={idx} className="tag-green">{tag}</span>
+          ))}
+          {recipe.tags.length > 3 && <span className="text-xs text-charcoal-600/60">+{recipe.tags.length - 3}</span>}
+        </div>
+      )}
+
+      <div className="grid grid-cols-3 gap-3 pt-4 border-t border-cream-200">
+        {nutrition.calories && (
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Flame className="w-3.5 h-3.5 text-terracotta-500" />
+            </div>
+            <div className="text-sm font-mono font-bold text-charcoal-800">{Math.round(nutrition.calories)}</div>
+            <div className="text-xs text-charcoal-600/60">kcal</div>
+          </div>
+        )}
+        {nutrition.protein && (
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Droplet className="w-3.5 h-3.5 text-forest-500" />
+            </div>
+            <div className="text-sm font-mono font-bold text-charcoal-800">{Math.round(nutrition.protein)}g</div>
+            <div className="text-xs text-charcoal-600/60">protein</div>
+          </div>
+        )}
+        {nutrition.carbs && (
+          <div className="text-center">
+            <div className="flex items-center justify-center gap-1 mb-1">
+              <Droplet className="w-3.5 h-3.5 text-terracotta-400" />
+            </div>
+            <div className="text-sm font-mono font-bold text-charcoal-800">{Math.round(nutrition.carbs)}g</div>
+            <div className="text-xs text-charcoal-600/60">carbs</div>
+          </div>
+        )}
+      </div>
+
+      {recipe.ingredients && recipe.ingredients.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-cream-200">
+          <p className="text-xs font-mono font-medium text-charcoal-700/50 uppercase mb-2">Ingredients</p>
+          <ul className="space-y-1">
+            {recipe.ingredients.slice(0, 3).map((ingredient, idx) => (
+              <li key={idx} className="text-sm text-charcoal-700 line-clamp-1">• {ingredient}</li>
+            ))}
+            {recipe.ingredients.length > 3 && (
+              <li className="text-xs text-charcoal-600/60">+{recipe.ingredients.length - 3} more</li>
+            )}
+          </ul>
+        </div>
+      )}
+
+      {isHovered && (
+        <button className="btn-primary w-full mt-4">View Recipe</button>
+      )}
+    </div>
+  )
 }

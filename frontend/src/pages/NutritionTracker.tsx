@@ -1,134 +1,142 @@
-import { useEffect, useState } from 'react';
-import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from 'recharts';
-import { BarChart3 } from 'lucide-react';
-import { api } from '../lib/api';
-import type { NutritionDay, NutritionInfo } from '../types/api';
+import { useEffect, useState } from 'react'
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { BarChart3, AlertCircle, Loader } from 'lucide-react'
+import { api } from '@/lib/api'
+import { NutritionData } from '@/types/api'
 
-const MACRO_COLORS = ['#4ade80', '#60a5fa', '#f59e0b', '#f87171'];
-
-export default function NutritionTracker() {
-  const [days, setDays] = useState<NutritionDay[]>([]);
-  const [averages, setAverages] = useState<NutritionInfo | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function NutritionTracker() {
+  const [nutritionData, setNutritionData] = useState<NutritionData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    api.getNutrition()
-      .then((data) => {
-        setDays(data.days ?? []);
-        setAverages(data.averages ?? null);
-      })
-      .catch(() => setError('Could not load nutrition data.'))
-      .finally(() => setLoading(false));
-  }, []);
+    api.getNutritionData()
+      .then((response) => setNutritionData(response.data || []))
+      .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load nutrition data'))
+      .finally(() => setLoading(false))
+  }, [])
 
-  const pieData = averages
-    ? [
-        { name: 'Protein', value: averages.protein ?? 0 },
-        { name: 'Carbs', value: averages.carbs ?? 0 },
-        { name: 'Fat', value: averages.fat ?? 0 },
-        { name: 'Fiber', value: averages.fiber ?? 0 },
-      ].filter((d) => d.value > 0)
-    : [];
+  const todayData = nutritionData.length > 0 ? nutritionData[0] : null
+  const todaySummary = todayData ? { calories: todayData.total_calories, protein: todayData.total_protein, carbs: todayData.total_carbs, fat: todayData.total_fat } : null
 
-  if (loading) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 py-10">
-        <div className="h-8 bg-stone-200 rounded w-48 mb-8 animate-pulse" />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {[0, 1, 2].map((i) => <div key={i} className="bg-white rounded-2xl h-64 border border-stone-100 animate-pulse" />)}
-        </div>
-      </div>
-    );
-  }
+  const chartData = nutritionData.map((data) => ({
+    date: new Date(data.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    calories: data.total_calories, protein: data.total_protein, carbs: data.total_carbs, fat: data.total_fat,
+  }))
+
+  const macroData = todaySummary ? [
+    { name: 'Protein', value: todaySummary.protein, color: '#3D6B3A' },
+    { name: 'Carbs', value: todaySummary.carbs, color: '#E07B54' },
+    { name: 'Fat', value: todaySummary.fat, color: '#C8603A' },
+  ] : []
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-10">
-      <h1 className="text-3xl font-bold text-stone-800 flex items-center gap-2 mb-2">
-        <BarChart3 className="text-forest-600" /> Nutrition Tracker
-      </h1>
-      <p className="text-stone-500 mb-8">Daily macro breakdown and trends.</p>
-
-      {error && <div className="bg-red-50 text-red-600 rounded-xl p-4 mb-6">{error}</div>}
-
-      {averages && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: 'Avg Calories', value: averages.calories, unit: 'kcal', color: 'bg-amber-50 text-amber-700' },
-            { label: 'Avg Protein', value: averages.protein, unit: 'g', color: 'bg-forest-50 text-forest-700' },
-            { label: 'Avg Carbs', value: averages.carbs, unit: 'g', color: 'bg-sky-50 text-sky-700' },
-            { label: 'Avg Fat', value: averages.fat, unit: 'g', color: 'bg-rose-50 text-rose-700' },
-          ].map(({ label, value, unit, color }) => (
-            <div key={label} className={`rounded-2xl p-4 ${color}`}>
-              <div className="text-2xl font-bold">{value ?? '—'}<span className="text-sm font-normal ml-1">{unit}</span></div>
-              <div className="text-sm opacity-75 mt-1">{label}</div>
-            </div>
-          ))}
+    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="mb-12">
+          <h1 className="font-display text-4xl font-bold text-charcoal-900 mb-3 flex items-center gap-3">
+            <BarChart3 className="text-forest-600" /> Nutrition Tracker
+          </h1>
+          <p className="text-lg text-charcoal-700/70">Monitor your daily nutrition with detailed macro breakdowns and trends.</p>
         </div>
-      )}
 
-      {days.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5">
-            <h2 className="font-semibold text-stone-700 mb-4">Calories Over Time</h2>
-            <ResponsiveContainer width="100%" height={220}>
-              <LineChart data={days}>
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="calories" stroke="#f59e0b" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+        {error && (
+          <div className="mb-8 p-4 bg-terracotta-50 border border-terracotta-200 rounded-lg flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-terracotta-600 flex-shrink-0 mt-0.5" />
+            <div><h3 className="font-medium text-terracotta-900">Error</h3><p className="text-sm text-terracotta-800 mt-1">{error}</p></div>
           </div>
+        )}
 
-          <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5">
-            <h2 className="font-semibold text-stone-700 mb-4">Macros by Day</h2>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={days}>
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="protein" fill="#4ade80" />
-                <Bar dataKey="carbs" fill="#60a5fa" />
-                <Bar dataKey="fat" fill="#f87171" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {pieData.length > 0 && (
-            <div className="bg-white rounded-2xl border border-stone-100 shadow-sm p-5">
-              <h2 className="font-semibold text-stone-700 mb-4">Average Macro Split</h2>
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                    {pieData.map((_, i) => <Cell key={i} fill={MACRO_COLORS[i % MACRO_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+        {loading && (
+          <div className="flex items-center justify-center py-20">
+            <div className="text-center">
+              <Loader className="w-8 h-8 text-forest-500 mx-auto mb-4 animate-spin" />
+              <p className="text-charcoal-700">Loading nutrition data...</p>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
 
-      {days.length === 0 && !error && (
-        <div className="text-center py-20 text-stone-400">No nutrition data available yet.</div>
-      )}
+        {!loading && (
+          <>
+            {todaySummary && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                {[
+                  { label: 'Calories', value: todaySummary.calories, unit: 'kcal', color: 'from-terracotta-500 to-terracotta-600', icon: '🔥' },
+                  { label: 'Protein', value: todaySummary.protein, unit: 'g', color: 'from-forest-500 to-forest-600', icon: '💪' },
+                  { label: 'Carbs', value: todaySummary.carbs, unit: 'g', color: 'from-terracotta-400 to-terracotta-500', icon: '🌾' },
+                  { label: 'Fat', value: todaySummary.fat, unit: 'g', color: 'from-cream-300 to-cream-400', icon: '🧈' },
+                ].map(({ label, value, unit, color, icon }) => (
+                  <div key={label} className={`card p-6 bg-gradient-to-br ${color} text-white overflow-hidden relative`}>
+                    <div className="absolute top-0 right-0 text-4xl opacity-10 -mr-2 -mt-2">{icon}</div>
+                    <div className="relative z-10">
+                      <p className="text-sm font-mono font-medium opacity-90 uppercase">{label}</p>
+                      <p className="text-3xl font-bold mt-2">{Math.round(value)}<span className="text-lg ml-1">{unit}</span></p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {chartData.length > 0 && (
+              <div className="space-y-8">
+                <div className="card p-8">
+                  <h2 className="font-display text-xl font-bold text-charcoal-900 mb-6">Calorie Intake Trend</h2>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#F2E4C4" />
+                      <XAxis dataKey="date" stroke="#2C2C2C" />
+                      <YAxis stroke="#2C2C2C" />
+                      <Tooltip contentStyle={{ backgroundColor: '#FDFAF4', border: '1px solid #F2E4C4', borderRadius: '8px' }} />
+                      <Legend />
+                      <Line type="monotone" dataKey="calories" stroke="#C8603A" strokeWidth={2} dot={{ fill: '#C8603A', r: 4 }} activeDot={{ r: 6 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="card p-8">
+                    <h2 className="font-display text-xl font-bold text-charcoal-900 mb-6">Daily Macros</h2>
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={chartData.slice(-7)}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#F2E4C4" />
+                        <XAxis dataKey="date" stroke="#2C2C2C" />
+                        <YAxis stroke="#2C2C2C" />
+                        <Tooltip contentStyle={{ backgroundColor: '#FDFAF4', border: '1px solid #F2E4C4', borderRadius: '8px' }} />
+                        <Legend />
+                        <Bar dataKey="protein" fill="#3D6B3A" />
+                        <Bar dataKey="carbs" fill="#E07B54" />
+                        <Bar dataKey="fat" fill="#C8603A" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {macroData.length > 0 && (
+                    <div className="card p-8">
+                      <h2 className="font-display text-xl font-bold text-charcoal-900 mb-6">Today's Macro Distribution</h2>
+                      <ResponsiveContainer width="100%" height={300}>
+                        <PieChart>
+                          <Pie data={macroData} cx="50%" cy="50%" labelLine={false} label={({ name, value }) => `${name}: ${Math.round(value)}g`} outerRadius={80} dataKey="value">
+                            {macroData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {nutritionData.length === 0 && !error && (
+              <div className="text-center py-20">
+                <BarChart3 className="w-12 h-12 text-charcoal-700/20 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-charcoal-800 mb-2">No nutrition data available</h3>
+                <p className="text-charcoal-700/70">Your nutrition data will appear here once meals are logged.</p>
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
-  );
+  )
 }
