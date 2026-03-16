@@ -1,6 +1,5 @@
 # ── Stage 1: Install Python deps ─────────────────────────────────────────────
 # This Dockerfile requires NO build context — everything is pulled from GitHub.
-# Works regardless of what dockerContext is set to in Render dashboard.
 FROM python:3.11-slim AS builder
 WORKDIR /app
 
@@ -8,12 +7,11 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential curl git && \
     rm -rf /var/lib/apt/lists/*
 
-# Clone the repo directly — no build context needed
+# Clone the repo — no build context needed
 ARG GIT_BRANCH=production
 RUN git clone --depth=1 --branch=${GIT_BRANCH} \
     https://github.com/CarlAmine/NourishAI.git /src
 
-# Install Python deps from the cloned repo
 RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r /src/backend/requirements.txt && \
     pip install --no-cache-dir pandas kaggle
@@ -28,7 +26,7 @@ ARG RECIPE_LIMIT=50000
 
 RUN mkdir -p /app/models /app/data && \
     if [ -n "${KAGGLE_USERNAME}" ] && [ -n "${KAGGLE_KEY}" ]; then \
-        echo "==> Kaggle credentials found — downloading Food.com dataset" && \
+        echo "==> Downloading Food.com dataset from Kaggle" && \
         mkdir -p /root/.config/kaggle && \
         echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > /root/.config/kaggle/kaggle.json && \
         chmod 600 /root/.config/kaggle/kaggle.json && \
@@ -36,9 +34,12 @@ RUN mkdir -p /app/models /app/data && \
             --file RAW_recipes.csv \
             --path /tmp/foodcom \
             --unzip && \
+        echo "==> Locating RAW_recipes.csv ..." && \
+        RAW_CSV=$(find /tmp/foodcom -name "RAW_recipes.csv" | head -1) && \
+        echo "Found at: ${RAW_CSV}" && \
         echo "==> Converting ${RECIPE_LIMIT} recipes" && \
         python /src/scripts/convert_foodcom.py \
-            --input /tmp/foodcom/RAW_recipes.csv \
+            --input "${RAW_CSV}" \
             --output /app/data/recipes.json \
             --limit ${RECIPE_LIMIT} && \
         echo "==> Building FAISS index" && \
@@ -63,10 +64,8 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Baked-in index artifacts
 COPY --from=index-builder /app/models /app/models
 
-# Pull app source from the cloned repo
 COPY --from=builder /src/backend/ .
 
 RUN mkdir -p /app/models /app/artifacts
