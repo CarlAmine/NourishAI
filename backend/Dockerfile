@@ -4,7 +4,7 @@ FROM python:3.11-slim AS builder
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential curl git && \
+    apt-get install -y --no-install-recommends build-essential curl git unzip && \
     rm -rf /var/lib/apt/lists/*
 
 # Clone the repo — no build context needed
@@ -24,19 +24,21 @@ ARG KAGGLE_USERNAME
 ARG KAGGLE_KEY
 ARG RECIPE_LIMIT=50000
 
-RUN mkdir -p /app/models /app/data && \
+RUN mkdir -p /app/models /app/data /tmp/foodcom && \
     if [ -n "${KAGGLE_USERNAME}" ] && [ -n "${KAGGLE_KEY}" ]; then \
         echo "==> Downloading Food.com dataset from Kaggle" && \
         mkdir -p /root/.config/kaggle && \
         echo "{\"username\":\"${KAGGLE_USERNAME}\",\"key\":\"${KAGGLE_KEY}\"}" > /root/.config/kaggle/kaggle.json && \
         chmod 600 /root/.config/kaggle/kaggle.json && \
-        kaggle datasets download -d shuyangli94/food-com-recipes-and-user-interactions \
+        kaggle datasets download \
+            -d shuyangli94/food-com-recipes-and-user-interactions \
             --file RAW_recipes.csv \
-            --path /tmp/foodcom \
-            --unzip && \
-        echo "==> Locating RAW_recipes.csv ..." && \
+            --path /tmp/foodcom && \
+        echo "==> Contents of /tmp/foodcom:" && ls -lh /tmp/foodcom/ && \
+        echo "==> Unzipping..." && \
+        unzip -o /tmp/foodcom/RAW_recipes.csv.zip -d /tmp/foodcom/ && \
         RAW_CSV=$(find /tmp/foodcom -name "RAW_recipes.csv" | head -1) && \
-        echo "Found at: ${RAW_CSV}" && \
+        echo "==> Found CSV at: ${RAW_CSV}" && \
         echo "==> Converting ${RECIPE_LIMIT} recipes" && \
         python /src/scripts/convert_foodcom.py \
             --input "${RAW_CSV}" \
