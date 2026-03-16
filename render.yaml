@@ -1,0 +1,61 @@
+# render.yaml — Infrastructure-as-Code for Render
+# Docs: https://render.com/docs/render-yaml-reference
+
+services:
+
+  # ── Backend (FastAPI) ───────────────────────────────────────────────────────
+  - type: web
+    name: nourishai-backend
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    plan: standard          # needs RAM for FAISS + sentence-transformers (~1 GB)
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: APP_NAME
+        value: NourishAI
+      - key: APP_VERSION
+        value: "1.0.0"
+      - key: ENV
+        value: prod
+      - key: LOG_LEVEL
+        value: INFO
+      - key: STRICT_STARTUP
+        value: "false"
+      - key: CORS_ORIGINS
+        value: "*"          # tighten to your frontend URL after first deploy
+      - key: OPENAI_API_KEY
+        sync: false         # secret — set manually in Render dashboard
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: OPENAI_TEMPERATURE
+        value: "0.2"
+      - key: OPENAI_MAX_TOKENS
+        value: "800"
+      - key: GDRIVE_RAW_RECIPES_ID
+        value: 1lE6zl-9dJKUnNu6CDuBvHPpGodKrGnoX
+      - key: GDRIVE_FOLDER_ID
+        value: 10okoRXmRZDGtsF8e5cDxSLEzJWfuF9nl
+      - key: FAISS_INDEX_PATH
+        value: models/faiss.index
+      - key: RECIPES_PKL_PATH
+        value: models/recipe.pkl
+      - key: EMBEDDING_MODEL_NAME
+        value: sentence-transformers/all-MiniLM-L6-v2
+      - key: EMBEDDING_DIM
+        value: "384"
+      - key: RETRIEVAL_CANDIDATES
+        value: "50"
+      - key: HYBRID_ALPHA
+        value: "0.65"
+
+  # ── Frontend (React + Nginx) ────────────────────────────────────────────────
+  - type: web
+    name: nourishai-frontend
+    runtime: docker
+    dockerfilePath: frontend/Dockerfile
+    dockerContext: frontend
+    plan: starter
+    envVars:
+      - key: VITE_API_URL
+        value: https://nourishai-backend.onrender.com/api/v1   # update after backend deploys
