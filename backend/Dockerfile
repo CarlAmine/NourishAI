@@ -1,28 +1,30 @@
-# ── Stage 1: Install Python deps ────────────────────────────────────────────
-# Build context: backend/ (Render default — no changes needed in dashboard)
+# ── Stage 1: Install Python deps ─────────────────────────────────────────────
+# This Dockerfile requires NO build context — everything is pulled from GitHub.
+# Works regardless of what dockerContext is set to in Render dashboard.
 FROM python:3.11-slim AS builder
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential curl && \
+    apt-get install -y --no-install-recommends build-essential curl git && \
     rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+# Clone the repo directly — no build context needed
+ARG GIT_BRANCH=production
+RUN git clone --depth=1 --branch=${GIT_BRANCH} \
+    https://github.com/CarlAmine/NourishAI.git /src
+
+# Install Python deps from the cloned repo
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir -r /src/backend/requirements.txt && \
     pip install --no-cache-dir pandas kaggle
 
-# ── Stage 2: Download Food.com + build FAISS index ───────────────────────────
+# ── Stage 2: Build FAISS index ───────────────────────────────────────────────
 FROM builder AS index-builder
 WORKDIR /app
 
 ARG KAGGLE_USERNAME
 ARG KAGGLE_KEY
 ARG RECIPE_LIMIT=50000
-
-# Everything is inside backend/ so these paths work with dockerContext: backend
-COPY scripts/ ./scripts/
-COPY data/sample_recipes.json ./data/sample_recipes.json
 
 RUN mkdir -p /app/models /app/data && \
     if [ -n "${KAGGLE_USERNAME}" ] && [ -n "${KAGGLE_KEY}" ]; then \
@@ -35,25 +37,25 @@ RUN mkdir -p /app/models /app/data && \
             --path /tmp/foodcom \
             --unzip && \
         echo "==> Converting ${RECIPE_LIMIT} recipes" && \
-        python scripts/convert_foodcom.py \
+        python /src/scripts/convert_foodcom.py \
             --input /tmp/foodcom/RAW_recipes.csv \
             --output /app/data/recipes.json \
             --limit ${RECIPE_LIMIT} && \
         echo "==> Building FAISS index" && \
-        python scripts/build_rag_index.py \
+        python /src/scripts/build_rag_index.py \
             --recipes /app/data/recipes.json \
             --out-dir /app/models && \
         rm -rf /tmp/foodcom /root/.config/kaggle && \
         echo "==> Done:" && ls -lh /app/models/ ; \
     else \
-        echo "==> No Kaggle credentials — building index from 10-recipe sample" && \
-        python scripts/build_rag_index.py \
-            --recipes /app/data/sample_recipes.json \
+        echo "==> No Kaggle credentials — building from 10-recipe sample" && \
+        python /src/scripts/build_rag_index.py \
+            --recipes /src/data/sample_recipes.json \
             --out-dir /app/models && \
         echo "==> Sample index built:" && ls -lh /app/models/ ; \
     fi
 
-# ── Stage 3: Runtime ─────────────────────────────────────────────────────────
+# ── Stage 3: Runtime ──────────────────────────────────────────────────────────
 FROM python:3.11-slim AS runtime
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 WORKDIR /app
@@ -61,11 +63,11 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Baked-in index
+# Baked-in index artifacts
 COPY --from=index-builder /app/models /app/models
 
-# App source (COPY . . works fine since context is backend/)
-COPY . .
+# Pull app source from the cloned repo
+COPY --from=builder /src/backend/ .
 
 RUN mkdir -p /app/models /app/artifacts
 
